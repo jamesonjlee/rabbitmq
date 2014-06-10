@@ -24,6 +24,47 @@ class Chef::Resource
   include Opscode::RabbitMQ
 end
 
+if node['rabbitmq']['logdir']
+  directory node['rabbitmq']['logdir'] do
+    owner 'rabbitmq'
+    group 'rabbitmq'
+    mode '775'
+    recursive true
+  end
+end
+
+directory node['rabbitmq']['mnesiadir'] do
+  owner 'rabbitmq'
+  group 'rabbitmq'
+  mode '775'
+  recursive true
+end
+
+template "#{node['rabbitmq']['config_root']}/rabbitmq-env.conf" do
+  source 'rabbitmq-env.conf.erb'
+  owner 'root'
+  group 'root'
+  mode 00644
+  notifies :restart, "service[#{node['rabbitmq']['service_name']}]"
+end
+
+template "#{node['rabbitmq']['config_root']}/rabbitmq.config" do
+  source 'rabbitmq.config.erb'
+  owner 'root'
+  group 'root'
+  mode 00644
+  variables(
+    :kernel => format_kernel_parameters
+    )
+  notifies :restart, "service[#{node['rabbitmq']['service_name']}]"
+end
+
+if File.exists?(node['rabbitmq']['erlang_cookie_path'])
+  existing_erlang_key =  File.read(node['rabbitmq']['erlang_cookie_path']).strip
+else
+  existing_erlang_key = ''
+end
+
 include_recipe 'erlang'
 
 ## Install the package
@@ -139,47 +180,6 @@ when 'smartos'
   service node['rabbitmq']['service_name'] do
     action [:enable, :start]
   end
-end
-
-if node['rabbitmq']['logdir']
-  directory node['rabbitmq']['logdir'] do
-    owner 'rabbitmq'
-    group 'rabbitmq'
-    mode '775'
-    recursive true
-  end
-end
-
-directory node['rabbitmq']['mnesiadir'] do
-  owner 'rabbitmq'
-  group 'rabbitmq'
-  mode '775'
-  recursive true
-end
-
-template "#{node['rabbitmq']['config_root']}/rabbitmq-env.conf" do
-  source 'rabbitmq-env.conf.erb'
-  owner 'root'
-  group 'root'
-  mode 00644
-  notifies :restart, "service[#{node['rabbitmq']['service_name']}]"
-end
-
-template "#{node['rabbitmq']['config_root']}/rabbitmq.config" do
-  source 'rabbitmq.config.erb'
-  owner 'root'
-  group 'root'
-  mode 00644
-  variables(
-    :kernel => format_kernel_parameters
-    )
-  notifies :restart, "service[#{node['rabbitmq']['service_name']}]"
-end
-
-if File.exists?(node['rabbitmq']['erlang_cookie_path'])
-  existing_erlang_key =  File.read(node['rabbitmq']['erlang_cookie_path']).strip
-else
-  existing_erlang_key = ''
 end
 
 if node['rabbitmq']['cluster'] && (node['rabbitmq']['erlang_cookie'] != existing_erlang_key)
