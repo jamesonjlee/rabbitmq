@@ -15,3 +15,7 @@ suites:
     run_list:
       - recipe[minitest-handler]
       - recipe[rabbitmq::default]
+
+  - name: rabbitmq_test_user_lwrps
+    run_list:
+      - recipe[rabbitmq_test::user_lwrps]
