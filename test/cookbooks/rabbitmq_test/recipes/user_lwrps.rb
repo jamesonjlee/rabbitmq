@@ -1,10 +1,13 @@
 include_recipe 'rabbitmq::default'
 include_recipe 'rabbitmq::user_management'
 
-# force the rabbitmq restart now, then start testing
-#execute 'sleep 10' do
-  #notifies :restart, "service[#{node['rabbitmq']['service_name']}]", :immediately
-#end
+# force restart the rabbitmq server, then sleep until it's ready(tm)
+service node['rabbitmq']['service_name'] do
+    action :restart
+end
+execute 'sleep 30' do
+  action :run
+end
 
 # can't verify it actually goes through without logging in, but at least exercise the code
 rabbitmq_user 'kitchen3' do
