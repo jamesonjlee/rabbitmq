@@ -12,7 +12,18 @@ end
 # can't verify it actually goes through without logging in, but at least exercise the code
 rabbitmq_user 'kitchen3' do
   password 'foobar'
-  action :change_password
+  action :add
+end
+
+rabbitmq_user 'kitchen3' do
+    vhost "/"
+    permissions ".* .* .*"
+    action :set_permissions
+end
+
+rabbitmq_user 'kitchen3' do
+    tag "administrator,test"
+    action :set_tags
 end
 
 rabbitmq_user 'guest' do
